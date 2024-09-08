@@ -1,4 +1,4 @@
-package white.ball.betterweather.domain.model
+package white.ball.betterweather.domain.model.additional_model
 
 data class WeatherByHours(
     val iconWeather: String,
