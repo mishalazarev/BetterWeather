@@ -1,18 +1,15 @@
 package white.ball.betterweather.presentation.nav_controller
 
 import android.content.Context
-import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.graphics.Brush
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import white.ball.betterweather.data.getClickDay
-import white.ball.betterweather.data.getData
+import white.ball.betterweather.data.ApiService
 import white.ball.betterweather.domain.model.ClickWeatherDayInCityModel
 import white.ball.betterweather.domain.model.WeatherInCityModel
-import white.ball.betterweather.presentation.TAG
 import white.ball.betterweather.presentation.screen.DetailScreen
 import white.ball.betterweather.presentation.screen.MainScreen
 
@@ -25,6 +22,7 @@ fun MainNavController(
     currentResponse: MutableState<String>,
     openDialog: MutableState<Boolean>,
     otherDayWeather: MutableState<ClickWeatherDayInCityModel>,
+    apiService: ApiService
 ) {
     NavHost(
         navController = navController,
@@ -37,7 +35,7 @@ fun MainNavController(
                 currentWeatherInPlace,
                 currentBackgroundColor,
                 clickSync = {
-                    getData(
+                    apiService.getMainJSONObject(
                         namePlace = currentWeatherInPlace.value.nameCity,
                         currentResponse = currentResponse,
                         context = context,
@@ -52,7 +50,7 @@ fun MainNavController(
                     navController.navigate("detail_screen")
                 },
                 getClickDay = { clickIndexDay ->
-                    otherDayWeather.value = getClickDay(clickIndexDay, currentResponse.value)
+                    otherDayWeather.value = apiService.getClickDay(clickIndexDay, currentResponse.value)
                 })
         }
 
@@ -68,7 +66,7 @@ fun MainNavController(
                     }
                 },
                 clickSync = {
-                    getData(
+                    apiService.getMainJSONObject(
                         namePlace = currentWeatherInPlace.value.nameCity,
                         currentResponse = currentResponse,
                         context = context,

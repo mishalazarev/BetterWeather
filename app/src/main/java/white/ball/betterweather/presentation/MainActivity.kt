@@ -9,8 +9,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Brush
 import androidx.navigation.compose.rememberNavController
+import white.ball.betterweather.data.ApiService
 import white.ball.betterweather.ui.theme.BetterWeatherTheme
-import white.ball.betterweather.data.getData
 import white.ball.betterweather.domain.model.ClickWeatherDayInCityModel
 import white.ball.betterweather.domain.model.WeatherInCityModel
 import white.ball.betterweather.presentation.nav_controller.MainNavController
@@ -21,6 +21,8 @@ import white.ball.betterweather.ui.theme.Purple80
 const val TAG = "tag"
 
 class MainActivity : ComponentActivity() {
+
+    private val apiService = ApiService()
 
     private val currentWeatherInPlace = mutableStateOf(
         WeatherInCityModel(
@@ -87,13 +89,14 @@ class MainActivity : ComponentActivity() {
                     currentBackgroundColor,
                     currentResponse,
                     openDialog,
-                    clickOtherDayWeather)
+                    clickOtherDayWeather,
+                    apiService)
 
                 if (openDialog.value) {
                     DialogSearch(
                         openDialog,
                         confirmCity = {
-                            getData(
+                            apiService.getMainJSONObject(
                                 namePlace = it,
                                 currentResponse = currentResponse,
                                 context = this@MainActivity,
@@ -103,7 +106,7 @@ class MainActivity : ComponentActivity() {
                         })
                 }
 
-                getData(
+                apiService.getMainJSONObject(
                     namePlace = currentWeatherInPlace.value.nameCity,
                     currentResponse = currentResponse,
                     context = this,
