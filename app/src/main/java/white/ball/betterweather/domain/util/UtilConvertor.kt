@@ -1,19 +1,12 @@
 package white.ball.betterweather.domain.util
 
-import android.os.Build
-import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.compose.ui.graphics.Brush
-import white.ball.betterweather.presentation.TAG
-import white.ball.betterweather.ui.theme.DayEndColor
-import white.ball.betterweather.ui.theme.DayStartColor
-import white.ball.betterweather.ui.theme.NightEndColor
-import white.ball.betterweather.ui.theme.NightStartColor
+import white.ball.betterweather.presentation.ui.theme.DayEndColor
+import white.ball.betterweather.presentation.ui.theme.DayStartColor
+import white.ball.betterweather.presentation.ui.theme.NightEndColor
+import white.ball.betterweather.presentation.ui.theme.NightStartColor
 import java.text.DateFormat
-import java.time.LocalDate
 import java.util.Calendar
-import java.util.Date
-import kotlin.time.Duration.Companion.milliseconds
 
 class UtilConvertor {
 

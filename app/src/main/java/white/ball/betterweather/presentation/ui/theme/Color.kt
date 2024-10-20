@@ -1,4 +1,4 @@
-package white.ball.betterweather.ui.theme
+package white.ball.betterweather.presentation.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
