@@ -2,8 +2,8 @@ package white.ball.betterweather.data
 
 import android.content.Context
 import android.util.Log
-import androidx.compose.runtime.MutableState
 import androidx.compose.ui.graphics.Brush
+import androidx.lifecycle.MutableLiveData
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
@@ -13,8 +13,8 @@ import white.ball.betterweather.presentation.TAG
 import white.ball.betterweather.domain.model.WeatherInCityModel
 import white.ball.betterweather.domain.model.additional_model.WeatherByHours
 import white.ball.betterweather.domain.model.additional_model.WeatherDayOfWeek
-import white.ball.betterweather.domain.util.UtilConvertor
-import white.ball.betterweather.domain.util.UtilTimeCorrector
+import white.ball.betterweather.domain.util.ConvertorUtil
+import white.ball.betterweather.domain.util.TimeCorrectorUtil
 import java.text.DateFormat
 import java.util.Calendar
 
@@ -23,15 +23,17 @@ const val API_KEY = "5ab316c38faa4d789b8193014241108"
 class ApiService {
 
     fun getMainJSONObject(
-        namePlace: String,
-        currentResponse: MutableState<String>,
+        nameCity: MutableLiveData<String>,
+        currentResponse: MutableLiveData<String>,
         context: Context,
-        currentWeatherInPlace: MutableState<WeatherInCityModel>,
-        currentBackgroundColor: MutableState<Brush>
+        currentWeatherInPlace: MutableLiveData<WeatherInCityModel>,
+        currentBackgroundColor: MutableLiveData<Brush>
     ) {
+
+         // https://api.weatherapi.com/v1/forecast.json?key=5ab316c38faa4d789b8193014241108&q=Rostov-Na-Donu&days=7&aqi=no&alerts=no
         val url = "https://api.weatherapi.com/v1/forecast.json?key=" +
                 "$API_KEY&q=" +
-                namePlace +
+                nameCity +
                 "&days=7&aqi=no&alerts=no"
         val queue = Volley.newRequestQueue(context)
         val request = StringRequest(
@@ -43,20 +45,20 @@ class ApiService {
                 Log.d(TAG, "getData: $response")
             },
             {
-                Log.d(TAG, "My log Volley Error: $it")
+                Log.e("Volley Error", "Error: ${it.localizedMessage}")
             })
         queue.add(request)
     }
 
     fun getClickDay(dayIndex: Int, response: String): ClickWeatherDayInCityModel {
-        val utilConvertor = UtilConvertor()
-        val utilTimeCorrector = UtilTimeCorrector()
+        val convertorUtil = ConvertorUtil()
+        val timeCorrectorUtil = TimeCorrectorUtil()
 
         val mainJSONObject = JSONObject(response)
         val daysJSONArray = mainJSONObject.getJSONObject("forecast").getJSONArray("forecastday")
 
         val date =
-            utilConvertor.convertDate((daysJSONArray[dayIndex] as JSONObject).getString("date"))
+            convertorUtil.convertDate((daysJSONArray[dayIndex] as JSONObject).getString("date"))
         Log.i(
             TAG,
             "getClickDay: ${(daysJSONArray[dayIndex] as JSONObject).getString("date")}\n$dayIndex"
@@ -80,11 +82,11 @@ class ApiService {
         val maxTemp = dayJSONObject.getString("maxtemp_c")
         val minTemp = dayJSONObject.getString("mintemp_c")
 
-        val sunriseTime = utilTimeCorrector.getCorrectTime(astroJSONObject.getString("sunrise"))
-        val sunsetTime = utilTimeCorrector.getCorrectTime(astroJSONObject.getString("sunset"))
+        val sunriseTime = timeCorrectorUtil.getCorrectTime(astroJSONObject.getString("sunrise"))
+        val sunsetTime = timeCorrectorUtil.getCorrectTime(astroJSONObject.getString("sunset"))
 
-        val moonriseTime = utilTimeCorrector.getCorrectTime(astroJSONObject.getString("moonrise"))
-        val moonsetTime = utilTimeCorrector.getCorrectTime(astroJSONObject.getString("moonset"))
+        val moonriseTime = timeCorrectorUtil.getCorrectTime(astroJSONObject.getString("moonrise"))
+        val moonsetTime = timeCorrectorUtil.getCorrectTime(astroJSONObject.getString("moonset"))
 
         /** current hour of day */
 
@@ -129,10 +131,10 @@ class ApiService {
 
     private fun getPlaceModel(
         response: String,
-        currentBackgroundColor: MutableState<Brush>
+        currentBackgroundColor: MutableLiveData<Brush>
     ): WeatherInCityModel {
-        val utilConvertor = UtilConvertor()
-        val utilTimeCorrector = UtilTimeCorrector()
+        val convertorUtil = ConvertorUtil()
+        val timeCorrectorUtil = TimeCorrectorUtil()
 
         val formatDay =
             DateFormat.getDateInstance(DateFormat.FULL).format(Calendar.getInstance().time)
@@ -157,11 +159,11 @@ class ApiService {
         val humidity = mainJSONObject.getJSONObject("current").getString("humidity")
         val feelTemp = mainJSONObject.getJSONObject("current").getString("feelslike_c")
 
-        val sunriseTime = utilTimeCorrector.getCorrectTime(astroJSONObject.getString("sunrise"))
-        val sunsetTime = utilTimeCorrector.getCorrectTime(astroJSONObject.getString("sunset"))
+        val sunriseTime = timeCorrectorUtil.getCorrectTime(astroJSONObject.getString("sunrise"))
+        val sunsetTime = timeCorrectorUtil.getCorrectTime(astroJSONObject.getString("sunset"))
 
-        val moonriseTime = utilTimeCorrector.getCorrectTime(astroJSONObject.getString("moonrise"))
-        val moonsetTime = utilTimeCorrector.getCorrectTime(astroJSONObject.getString("moonset"))
+        val moonriseTime = timeCorrectorUtil.getCorrectTime(astroJSONObject.getString("moonrise"))
+        val moonsetTime = timeCorrectorUtil.getCorrectTime(astroJSONObject.getString("moonset"))
 
         val hoursArray = daysJSONArray.getJSONObject(0).getJSONArray("hour")
 
@@ -194,9 +196,9 @@ class ApiService {
 
         for (day in 1 until daysJSONArray.length()) {
             currentDayOfWeekText = if (day != 0) {
-                utilConvertor.getNextDayOfWeek(currentDayOfWeekText)
+                convertorUtil.getNextDayOfWeek(currentDayOfWeekText)
             } else {
-                utilConvertor.convertDayOfWeekOnEnglish(currentDayOfWeekText)
+                convertorUtil.convertDayOfWeekOnEnglish(currentDayOfWeekText)
             }
 
             val dayJSONnObj = daysJSONArray.getJSONObject(day)
@@ -204,7 +206,7 @@ class ApiService {
 
             weatherDayOfWeek.add(
                 WeatherDayOfWeek(
-                    utilConvertor.convertDate((daysJSONArray[day] as JSONObject).getString("date")),
+                    convertorUtil.convertDate((daysJSONArray[day] as JSONObject).getString("date")),
                     currentDayOfWeekText,
                     "https:${dayObject.getJSONObject("condition").getString("icon")}",
                     dayObject.getJSONObject("condition").getString("text"),
@@ -216,16 +218,16 @@ class ApiService {
 
         /** to change color of background */
 
-        currentBackgroundColor.value = utilConvertor.getBackgroundColorByTime(
+        currentBackgroundColor.value = convertorUtil.getBackgroundColorByTime(
             sunriseTime.split(" ")[0].split(":")[0].toInt(),
             sunsetTime.split(" ")[0].split(":")[0].toInt()
         )
 
-        utilConvertor.getTodayDayShort()
+        convertorUtil.getTodayDayShort()
 
         return WeatherInCityModel(
             nameCity,
-            utilConvertor.getTodayDayShort(),
+            convertorUtil.getTodayDayShort(),
             timeNow,
             iconWeather,
             condition,

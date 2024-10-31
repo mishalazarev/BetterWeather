@@ -67,7 +67,15 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
+    // navigation
     implementation(libs.androidx.navigation.compose)
+
+    // coil
     implementation(libs.coil.compose)
+
+    // volley
     implementation(libs.volley)
+
+    // viewModel
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
 }

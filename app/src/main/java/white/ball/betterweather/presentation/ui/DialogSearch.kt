@@ -6,14 +6,16 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.MutableLiveData
 
 @Composable
-fun DialogSearch(dialogState: MutableState<Boolean>, confirmCity: (String) -> Unit) {
+fun DialogSearch(
+    dialogState: MutableLiveData<Boolean>,
+    confirmCity: (String) -> Unit) {
     val dialogText = remember {
         mutableStateOf("")
     }

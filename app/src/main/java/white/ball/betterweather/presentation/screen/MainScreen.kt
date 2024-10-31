@@ -25,12 +25,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -38,31 +38,44 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.MutableLiveData
 import coil.compose.AsyncImage
 import white.ball.betterweather.R
-import white.ball.betterweather.domain.model.WeatherInCityModel
 import white.ball.betterweather.domain.model.additional_model.WeatherByHours
 import white.ball.betterweather.domain.model.additional_model.WeatherDayOfWeek
+import white.ball.betterweather.presentation.ui.DialogSearch
 import white.ball.betterweather.presentation.ui.component.MoonInfo
 import white.ball.betterweather.presentation.ui.component.SunInfo
 import white.ball.betterweather.presentation.ui.theme.MainBlockColor
 import white.ball.betterweather.presentation.ui.theme.MinTempColor
+import white.ball.betterweather.presentation.view_model.MainScreenViewModel
+import white.ball.betterweather.presentation.view_model.rememberViewModel
 import java.text.DateFormat
 import java.util.Calendar
 
 @Composable
 fun MainScreen(
-    currentWeatherInPlace: MutableState<WeatherInCityModel>,
-    currentBackgroundColor: MutableState<Brush>,
     clickSync: () -> Unit,
-    clickSearch: () -> Unit,
     navigateToDetail: () -> Unit,
     getClickDay: (Int) -> Unit
 ) {
+    val context = LocalContext.current
+    val mainScreenViewModel = rememberViewModel {
+        MainScreenViewModel(
+            cityName = it.cityName,
+            currentBackgroundColor = it.currentBackgroundColor,
+            currentWeatherInCity = it.currentWeatherInCity,
+            clickWeatherDayInCityModel = it.clickOtherDayWeather,
+            isOpenDialog = it.isOpenDialog,
+        )
+    }
+
+    val currentWeatherInCity = checkNotNull(mainScreenViewModel.mWeatherInCity.value)
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(currentBackgroundColor.value)
+            .background(checkNotNull(mainScreenViewModel.mBackgroundColor.value))
             .padding(top = 40.dp, end = 5.dp, start = 5.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -87,7 +100,7 @@ fun MainScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(onClick = {
-                        clickSearch.invoke()
+                        mainScreenViewModel.setOpenDialog()
                     }) {
                         Icon(
                             imageVector = Icons.Filled.Search,
@@ -96,7 +109,7 @@ fun MainScreen(
                         )
                     }
                     Text(
-                        text = currentWeatherInPlace.value.nameCity,
+                        text = currentWeatherInCity.nameCity,
                         style = TextStyle(
                             fontSize = 26.sp,
                             color = Color.White,
@@ -114,7 +127,7 @@ fun MainScreen(
                     }
                 }
                 Text(
-                    text = currentWeatherInPlace.value.todayDay,
+                    text = currentWeatherInCity.todayDay,
                     modifier = Modifier
                         .padding(bottom = 10.dp),
                     style = TextStyle(
@@ -131,7 +144,7 @@ fun MainScreen(
                 ) {
                     Text(
                         text = "${
-                            currentWeatherInPlace.value.currentTemp.toFloat().toInt()
+                            currentWeatherInCity.currentTemp.toFloat().toInt()
                         }°",
                         style = TextStyle(
                             fontSize = 60.sp,
@@ -147,7 +160,7 @@ fun MainScreen(
                         verticalArrangement = Arrangement.Center
                     ) {
                         AsyncImage(
-                            model = currentWeatherInPlace.value.currentIconWeather,
+                            model = currentWeatherInCity.currentIconWeather,
                             contentDescription = "icon_current_weather",
                             modifier = Modifier
                                 .padding(start = 10.dp)
@@ -155,7 +168,7 @@ fun MainScreen(
                         Text(
                             modifier = Modifier
                                 .padding(start = 10.dp),
-                            text = currentWeatherInPlace.value.condition,
+                            text = currentWeatherInCity.condition,
                             style = TextStyle(
                                 fontSize = 16.sp,
                                 color = Color.White,
@@ -181,7 +194,7 @@ fun MainScreen(
                                 .size(30.dp)
                         )
                         Text(
-                            text = "${currentWeatherInPlace.value.humidity} %",
+                            text = "${currentWeatherInCity.humidity} %",
                             style = TextStyle(
                                 fontSize = 14.sp,
                                 color = Color.LightGray
@@ -199,7 +212,7 @@ fun MainScreen(
                                 .size(40.dp)
                         )
                         Text(
-                            text = "${currentWeatherInPlace.value.feelTemp.toFloat().toInt()}°",
+                            text = "${currentWeatherInCity.feelTemp.toFloat().toInt()}°",
                             style = TextStyle(
                                 fontSize = 14.sp,
                                 color = Color.LightGray
@@ -217,7 +230,7 @@ fun MainScreen(
                                 .size(30.dp)
                         )
                         Text(
-                            text = "${currentWeatherInPlace.value.wind} mp/h",
+                            text = "${currentWeatherInCity.wind} mp/h",
                             style = TextStyle(
                                 fontSize = 14.sp,
                                 color = Color.LightGray
@@ -230,13 +243,22 @@ fun MainScreen(
 
         }
 
-        SunInfo(currentWeatherInPlace.value.sunriseTime, currentWeatherInPlace.value.sunsetTime)
+        if (checkNotNull(mainScreenViewModel.mIsOpenDialog.value)) {
+            DialogSearch(
+                mainScreenViewModel._mIsOpenDialog,
+                confirmCity = { cityName ->
+                    mainScreenViewModel.fetchWeatherData(context = context, cityName)
+                    }
+            )
+        }
 
-        MoonInfo(currentWeatherInPlace.value.moonrise, currentWeatherInPlace.value.moonset)
+        SunInfo(currentWeatherInCity.sunriseTime, currentWeatherInCity.sunsetTime)
 
-        WeatherByHoursList(currentWeatherInPlace.value.weatherByHoursList)
+        MoonInfo(currentWeatherInCity.moonrise, currentWeatherInCity.moonset)
 
-        WeatherDayOfWeekList(currentWeatherInPlace.value.weatherByWeekList, navigateToDetail, getClickDay)
+        WeatherByHoursList(currentWeatherInCity.weatherByHoursList)
+
+        WeatherDayOfWeekList(currentWeatherInCity.weatherByWeekList, navigateToDetail, getClickDay)
     }
 }
 
