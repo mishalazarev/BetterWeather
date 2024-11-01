@@ -1,13 +1,12 @@
 package white.ball.betterweather.presentation.nav_controller
 
-import android.util.Log
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import white.ball.betterweather.data.ApiService
-import white.ball.betterweather.presentation.TAG
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import white.ball.betterweather.presentation.screen.DetailScreen
 import white.ball.betterweather.presentation.screen.InternetNotWorking
 import white.ball.betterweather.presentation.screen.MainScreen
@@ -18,27 +17,29 @@ import white.ball.betterweather.presentation.view_model.rememberViewModel
 fun MainNavController(
     navController: NavHostController,
 ) {
-    val apiService = ApiService()
+    val coroutineScope = rememberCoroutineScope()
     val mainScreenViewModel = rememberViewModel {
         MainScreenViewModel(
             cityName = it.cityName,
             currentBackgroundColor = it.currentBackgroundColor,
             currentWeatherInCity = it.currentWeatherInCity,
-            clickWeatherDayInCityModel = it.clickOtherDayWeather,
-            isOpenDialog = it.isOpenDialog
+            clickForecastDayModel = it.currentForecastDay,
+            isOpenDialog = it.isOpenDialog,
+            apiService = it.apiService,
         )
     }
-    val context = LocalContext.current
 
-    Log.d(TAG, "MainNavController: ${mainScreenViewModel.mWeatherInCity.value!!.sunsetTime}")
+//    Log.d(TAG, "MainNavController: ${mainScreenViewModel.mWeatherInCity.value!!.forecast.forecastday[0].astro.sunset}")
 
     NavHost(navController = navController, startDestination = "main_screen") {
         composable(route = "main_screen") {
             MainScreen(
-                clickSync = { mainScreenViewModel.fetchWeatherData(context) },
+                clickSync = { coroutineScope.launch (Dispatchers.IO) {
+                    mainScreenViewModel.fetchWeatherData()
+                } },
                 navigateToDetail = { navController.navigate("detail_screen") },
                 getClickDay = { clickIndexDay ->
-                    mainScreenViewModel.setClickWeatherDayInCity(apiService.getClickDay(clickIndexDay, checkNotNull(mainScreenViewModel.mResponse.value)))
+                    mainScreenViewModel.setClickWeatherDayInCity(clickIndexDay)
                 }
             )
         }
@@ -46,15 +47,20 @@ fun MainNavController(
         composable(route = "detail_screen") {
             DetailScreen(
                 currentBackgroundColor = mainScreenViewModel.mBackgroundColor,
-                currentWeatherInPlace = mainScreenViewModel.mClickWeatherDayInCity,
+                weatherInCity = mainScreenViewModel.mWeatherInCity,
+                forecastDay = mainScreenViewModel.mClickWeatherDayInCity,
                 navigateBack = { navController.popBackStack() },
-                clickSync = { mainScreenViewModel.fetchWeatherData(context) }
+                clickSync = { coroutineScope.launch (Dispatchers.IO) {
+                    mainScreenViewModel.fetchWeatherData()
+                } }
             )
         }
 
         composable(route = "internet_not_working") {
             InternetNotWorking(
-                loadWeatherFromAPI = { mainScreenViewModel.fetchWeatherData(context) }
+                loadWeatherFromAPI = { coroutineScope.launch(Dispatchers.IO) {
+                    mainScreenViewModel.fetchWeatherData()
+                } }
             )
         }
 

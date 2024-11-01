@@ -34,8 +34,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.LiveData
 import coil.compose.AsyncImage
-import white.ball.betterweather.domain.model.ClickWeatherDayInCityModel
-import white.ball.betterweather.domain.model.additional_model.WeatherByHours
+import white.ball.betterweather.domain.model.Forecastday
+import white.ball.betterweather.domain.model.Hour
+import white.ball.betterweather.domain.model.WeatherInCity
 import white.ball.betterweather.presentation.ui.component.MoonInfo
 import white.ball.betterweather.presentation.ui.component.SunInfo
 import white.ball.betterweather.presentation.ui.theme.MainBlockColor
@@ -44,11 +45,13 @@ import white.ball.betterweather.presentation.ui.theme.MinTempColor
 @Composable
 fun DetailScreen(
     currentBackgroundColor: LiveData<Brush>,
-    currentWeatherInPlace: LiveData<ClickWeatherDayInCityModel>,
+    weatherInCity: LiveData<WeatherInCity>,
+    forecastDay: LiveData<Forecastday>,
     navigateBack: () -> Unit,
     clickSync: () -> Unit
 ) {
-    val mCurrentWeatherInPlace = checkNotNull(currentWeatherInPlace.value)
+    val mCurrentWeatherInCity = checkNotNull(weatherInCity.value)
+    val mCurrentForecastDay = checkNotNull(forecastDay.value)
 
     Column(
         modifier = Modifier
@@ -57,13 +60,13 @@ fun DetailScreen(
             .padding(end = 5.dp, start = 5.dp, top = 40.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        MainCardInfo(currentWeatherInPlace, navigateBack, clickSync)
+        MainCardInfo(weatherInCity, forecastDay, navigateBack, clickSync)
 
-        MoonInfo(mCurrentWeatherInPlace.moonrise, mCurrentWeatherInPlace.moonset)
+        MoonInfo(mCurrentForecastDay.astro.moonrise, mCurrentForecastDay.astro.moonset)
 
-        SunInfo(mCurrentWeatherInPlace.sunriseTime, mCurrentWeatherInPlace.sunsetTime)
+        SunInfo(mCurrentForecastDay.astro.sunrise, mCurrentForecastDay.astro.sunset)
 
-        WeatherByHourPartOfDayList(mCurrentWeatherInPlace.weatherByHoursList)
+        WeatherByHourPartOfDayList(mCurrentForecastDay.hour)
 
         clickSync()
     }
@@ -72,11 +75,13 @@ fun DetailScreen(
 
 @Composable
 private fun MainCardInfo(
-    currentWeatherInPlace: LiveData<ClickWeatherDayInCityModel>,
+    weatherInCity: LiveData<WeatherInCity>,
+    currentForecastDay: LiveData<Forecastday>,
     navigateBack: () -> Unit,
     clickSync: () -> Unit
 ) {
-    val mCurrentWeatherInPlace = checkNotNull(currentWeatherInPlace.value)
+    val mCurrentForecastDay = checkNotNull(currentForecastDay.value)
+    val mWeatherInCity = checkNotNull(weatherInCity.value)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -103,7 +108,7 @@ private fun MainCardInfo(
                     )
                 }
                 Text(
-                    text = mCurrentWeatherInPlace.nameCity,
+                    text = mWeatherInCity.location.name,
                     style = TextStyle(
                         fontSize = 26.sp,
                         color = Color.White,
@@ -119,15 +124,15 @@ private fun MainCardInfo(
                     )
                 }
             }
-            Text(
-                modifier = Modifier.padding(bottom = 10.dp),
-                text = mCurrentWeatherInPlace.dayText,
-                style = TextStyle(
-                    fontSize = 14.sp,
-                    color = Color.LightGray,
-                    fontFamily = FontFamily.SansSerif
-                )
-            )
+//            Text(
+//                modifier = Modifier.padding(bottom = 10.dp),
+//                text = mCurrentForecastDay.day.mintemp_c,
+//                style = TextStyle(
+//                    fontSize = 14.sp,
+//                    color = Color.LightGray,
+//                    fontFamily = FontFamily.SansSerif
+//                )
+//            )
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -137,7 +142,7 @@ private fun MainCardInfo(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "${mCurrentWeatherInPlace.maxTemp.toFloat().toInt()}°",
+                        text = "${mCurrentForecastDay.day.maxtemp_c.toFloat().toInt()}°",
                         style = TextStyle(
                             fontSize = 60.sp,
                             color = Color.White,
@@ -146,7 +151,7 @@ private fun MainCardInfo(
                         modifier = Modifier.padding(top = 15.dp)
                     )
                     Text(
-                        text = "${mCurrentWeatherInPlace.minTemp.toFloat().toInt()}°",
+                        text = "${mCurrentForecastDay.day.mintemp_c.toFloat().toInt()}°",
                         style = TextStyle(
                             fontSize = 40.sp,
                             color = MinTempColor,
@@ -160,7 +165,7 @@ private fun MainCardInfo(
                     verticalArrangement = Arrangement.Center
                 ) {
                     AsyncImage(
-                        model = mCurrentWeatherInPlace.iconWeather,
+                        model = mCurrentForecastDay.day.condition.icon,
                         contentDescription = "icon_current_weather",
                         modifier = Modifier
                             .padding(start = 10.dp)
@@ -168,7 +173,7 @@ private fun MainCardInfo(
                     )
                     Text(
                         modifier = Modifier.padding(start = 10.dp),
-                        text = mCurrentWeatherInPlace.condition,
+                        text = mCurrentForecastDay.day.condition.text,
                         style = TextStyle(
                             fontSize = 16.sp,
                             color = Color.White,
@@ -182,7 +187,7 @@ private fun MainCardInfo(
 }
 
 @Composable
-private fun WeatherByHourPartOfDayList(weatherByHoursList: List<WeatherByHours>) {
+private fun WeatherByHourPartOfDayList(weatherByHoursList: List<Hour>) {
     LazyColumn(
         modifier = Modifier
             .padding(top = 10.dp)
@@ -197,7 +202,7 @@ private fun WeatherByHourPartOfDayList(weatherByHoursList: List<WeatherByHours>)
 }
 
 @Composable
-fun WeatherHourItem(index: Int, currentHour: WeatherByHours) {
+fun WeatherHourItem(index: Int, currentHour: Hour) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -228,14 +233,14 @@ fun WeatherHourItem(index: Int, currentHour: WeatherByHours) {
             )
         }
         AsyncImage(
-            model = currentHour.iconWeather,
-            contentDescription = currentHour.conditionText,
+            model = currentHour.condition.icon,
+            contentDescription = currentHour.condition.text,
             modifier = Modifier
                 .size(50.dp)
                 .padding(start = 10.dp)
         )
         Text(
-            text = "${currentHour.temp.toFloat().toInt()}°",
+            text = "${currentHour.temp_c.toFloat().toInt()}°",
             style = TextStyle(
                 fontSize = 16.sp,
                 color = Color.LightGray,

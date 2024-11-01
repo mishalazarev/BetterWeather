@@ -1,4 +1,4 @@
-package white.ball.betterweather.domain.model.gson
+package white.ball.betterweather.domain.model.base_model
 
 data class Astro(
     val is_moon_up: Int,
