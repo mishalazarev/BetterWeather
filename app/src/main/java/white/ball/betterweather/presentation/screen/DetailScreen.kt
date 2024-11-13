@@ -21,7 +21,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,45 +34,54 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import white.ball.betterweather.domain.model.ClickWeatherDayInCityModel
+import white.ball.betterweather.domain.model.ClickedWeatherInCity
 import white.ball.betterweather.domain.model.additional_model.WeatherByHours
+import white.ball.betterweather.presentation.MainActivity.Companion.createClickedWeatherInCity
+import white.ball.betterweather.presentation.MainActivity.Companion.createWeatherInCity
 import white.ball.betterweather.presentation.ui.component.MoonInfo
 import white.ball.betterweather.presentation.ui.component.SunInfo
 import white.ball.betterweather.presentation.ui.theme.MainBlockColor
 import white.ball.betterweather.presentation.ui.theme.MinTempColor
+import white.ball.betterweather.presentation.ui.theme.Pink80
+import white.ball.betterweather.presentation.ui.theme.Purple80
+import white.ball.betterweather.presentation.view_model.MainScreenViewModel
 
 @Composable
 fun DetailScreen(
-    currentBackgroundColor: MutableState<Brush>,
-    currentWeatherInPlace: MutableState<ClickWeatherDayInCityModel>,
+    viewModel: MainScreenViewModel,
     navigateBack: () -> Unit,
-    clickSync: () -> Unit
 ) {
+    val weatherInCity = viewModel.weatherInCity.observeAsState(createWeatherInCity()).value
+    val clickedWeatherInCity = viewModel.clickedWeatherInCity.observeAsState(createClickedWeatherInCity()).value
+    val backgroundColor = viewModel.backgroundColor.observeAsState(Brush.sweepGradient(
+        colors = listOf(Purple80, Pink80)
+    )).value
+
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(currentBackgroundColor.value)
+            .background(backgroundColor)
             .padding(end = 5.dp, start = 5.dp, top = 40.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        MainCardInfo(currentWeatherInPlace, navigateBack, clickSync)
+        MainCardInfo(clickedWeatherInCity, weatherInCity.nameCity, navigateBack)
 
-        MoonInfo(currentWeatherInPlace.value.moonrise, currentWeatherInPlace.value.moonset)
+        MoonInfo(clickedWeatherInCity.moonrise, clickedWeatherInCity.moonset)
 
-        SunInfo(currentWeatherInPlace.value.sunriseTime, currentWeatherInPlace.value.sunsetTime)
+        SunInfo(clickedWeatherInCity.sunrise, clickedWeatherInCity.sunset)
 
-        WeatherByHourPartOfDayList(currentWeatherInPlace.value.weatherByHoursList)
+        WeatherByHourPartOfDayList(clickedWeatherInCity.weatherByHoursList)
 
-        clickSync()
     }
 }
 
 
 @Composable
 private fun MainCardInfo(
-    currentWeatherInPlace: MutableState<ClickWeatherDayInCityModel>,
+    clickedWeatherInPlace: ClickedWeatherInCity,
+    nameCity: String,
     navigateBack: () -> Unit,
-    clickSync: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -99,7 +108,7 @@ private fun MainCardInfo(
                     )
                 }
                 Text(
-                    text = currentWeatherInPlace.value.nameCity,
+                    text = nameCity,
                     style = TextStyle(
                         fontSize = 26.sp,
                         color = Color.White,
@@ -107,7 +116,7 @@ private fun MainCardInfo(
                         textAlign = TextAlign.Center
                     )
                 )
-                IconButton(onClick = { clickSync.invoke() }) {
+                IconButton(onClick = {  }) {
                     Icon(
                         imageVector = Icons.Filled.Refresh,
                         contentDescription = "refresh",
@@ -117,7 +126,7 @@ private fun MainCardInfo(
             }
             Text(
                 modifier = Modifier.padding(bottom = 10.dp),
-                text = currentWeatherInPlace.value.dayText,
+                text = clickedWeatherInPlace.dayOfWeek,
                 style = TextStyle(
                     fontSize = 14.sp,
                     color = Color.LightGray,
@@ -133,7 +142,7 @@ private fun MainCardInfo(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "${currentWeatherInPlace.value.maxTemp.toFloat().toInt()}°",
+                        text = "${clickedWeatherInPlace.maxTemp.toFloat().toInt()}°",
                         style = TextStyle(
                             fontSize = 60.sp,
                             color = Color.White,
@@ -142,7 +151,7 @@ private fun MainCardInfo(
                         modifier = Modifier.padding(top = 15.dp)
                     )
                     Text(
-                        text = "${currentWeatherInPlace.value.minTemp.toFloat().toInt()}°",
+                        text = "${clickedWeatherInPlace.minTemp.toFloat().toInt()}°",
                         style = TextStyle(
                             fontSize = 40.sp,
                             color = MinTempColor,
@@ -156,7 +165,7 @@ private fun MainCardInfo(
                     verticalArrangement = Arrangement.Center
                 ) {
                     AsyncImage(
-                        model = currentWeatherInPlace.value.iconWeather,
+                        model = clickedWeatherInPlace.iconWeather,
                         contentDescription = "icon_current_weather",
                         modifier = Modifier
                             .padding(start = 10.dp)
@@ -164,7 +173,7 @@ private fun MainCardInfo(
                     )
                     Text(
                         modifier = Modifier.padding(start = 10.dp),
-                        text = currentWeatherInPlace.value.condition,
+                        text = clickedWeatherInPlace.condition,
                         style = TextStyle(
                             fontSize = 16.sp,
                             color = Color.White,

@@ -1,0 +1,16 @@
+package white.ball.betterweather.domain.model
+
+
+data class WeatherInCity(
+    val nameCity: String,
+    val currentTime: String,
+    val currentIconWeather: String,
+    val condition: String,
+    val currentTemp: String,
+
+    val wind: String,
+    val humidity: String,
+    val feelTemp: String,
+
+    val weatherByWeekList: MutableList<ClickedWeatherInCity>
+)

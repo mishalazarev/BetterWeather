@@ -4,62 +4,46 @@ import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import white.ball.betterweather.data.ApiService
-import white.ball.betterweather.domain.model.ClickWeatherDayInCityModel
-import white.ball.betterweather.domain.model.WeatherInCityModel
+import white.ball.betterweather.data.api.APIService
+import white.ball.betterweather.domain.model.WeatherInCity
+import white.ball.betterweather.domain.model.screen.ScreenNavigation
 import white.ball.betterweather.presentation.screen.DetailScreen
+import white.ball.betterweather.presentation.screen.LoadScreen
 import white.ball.betterweather.presentation.screen.MainScreen
+import white.ball.betterweather.presentation.view_model.MainScreenViewModel
 
 @Composable
 fun MainNavController(
     navController: NavHostController,
-    context: Context,
-    currentWeatherInPlace: MutableState<WeatherInCityModel>,
-    currentBackgroundColor: MutableState<Brush>,
-    currentResponse: MutableState<String>,
-    openDialog: MutableState<Boolean>,
-    otherDayWeather: MutableState<ClickWeatherDayInCityModel>,
-    apiService: ApiService
+    mainScreenViewModel: MainScreenViewModel,
 ) {
     NavHost(navController = navController, startDestination = "main_screen") {
-        composable(route = "main_screen") {
-            MainScreen(
-                currentWeatherInPlace = currentWeatherInPlace,
-                currentBackgroundColor = currentBackgroundColor,
-                clickSync = { fetchWeatherData(currentWeatherInPlace.value.nameCity, context, apiService, currentResponse, currentWeatherInPlace, currentBackgroundColor) },
-                clickSearch = { openDialog.value = true },
-                navigateToDetail = { navController.navigate("detail_screen") },
-                getClickDay = { clickIndexDay -> otherDayWeather.value = apiService.getClickDay(clickIndexDay, currentResponse.value) }
+        composable(route = ScreenNavigation.LoadScreen.route) {
+            LoadScreen(
+//                viewModel = mainScreenViewModel,
+//                navigateToMainScreen = {  },
+//                navigateTo
             )
         }
 
-        composable(route = "detail_screen") {
+        composable(route = ScreenNavigation.MainScreen.route) {
+            MainScreen(
+                viewModel = mainScreenViewModel,
+                navigateToDetail = { navController.navigate("detail_screen") },
+                getClickDay = { clickIndexDay -> mainScreenViewModel.setClickedWeatherInCity(clickIndexDay)}
+            )
+        }
+
+        composable(route = ScreenNavigation.DetailScreen.route) {
             DetailScreen(
-                currentBackgroundColor = currentBackgroundColor,
-                currentWeatherInPlace = otherDayWeather,
+                viewModel = mainScreenViewModel,
                 navigateBack = { navController.popBackStack() },
-                clickSync = { fetchWeatherData(currentWeatherInPlace.value.nameCity, context, apiService, currentResponse, currentWeatherInPlace, currentBackgroundColor) }
             )
         }
     }
-}
-
-private fun fetchWeatherData(
-    cityName: String,
-    context: Context,
-    apiService: ApiService,
-    currentResponse: MutableState<String>,
-    currentWeatherInPlace: MutableState<WeatherInCityModel>,
-    currentBackgroundColor: MutableState<Brush>
-) {
-    apiService.getMainJSONObject(
-        namePlace = cityName,
-        currentResponse = currentResponse,
-        context = context,
-        currentWeatherInPlace = currentWeatherInPlace,
-        currentBackgroundColor = currentBackgroundColor
-    )
 }
