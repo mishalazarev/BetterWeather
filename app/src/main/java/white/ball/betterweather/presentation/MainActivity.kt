@@ -6,10 +6,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
-import white.ball.betterweather.data.api.APIService
 import white.ball.betterweather.presentation.ui.theme.BetterWeatherTheme
 import white.ball.betterweather.domain.model.ClickedWeatherInCity
 import white.ball.betterweather.domain.model.WeatherInCity
@@ -46,7 +44,7 @@ class MainActivity : ComponentActivity() {
         fun createWeatherInCity() = WeatherInCity(
             "Rostov-Na-Donu",  "00:00", "", "",
             "0", "0", "0", "0",
-            mutableListOf()
+            mutableListOf(createClickedWeatherInCity())
         )
 
         fun createClickedWeatherInCity() = ClickedWeatherInCity(

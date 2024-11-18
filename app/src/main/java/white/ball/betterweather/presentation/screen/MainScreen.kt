@@ -2,6 +2,7 @@ package white.ball.betterweather.presentation.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,7 +15,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -44,7 +44,6 @@ import coil.compose.AsyncImage
 import white.ball.betterweather.R
 import white.ball.betterweather.domain.model.ClickedWeatherInCity
 import white.ball.betterweather.domain.model.additional_model.WeatherByHours
-import white.ball.betterweather.presentation.MainActivity.Companion.createClickedWeatherInCity
 import white.ball.betterweather.presentation.MainActivity.Companion.createWeatherInCity
 import white.ball.betterweather.presentation.ui.DialogSearch
 import white.ball.betterweather.presentation.ui.component.MoonInfo
@@ -64,7 +63,7 @@ fun MainScreen(
     getClickDay: (Int) -> Unit
 ) {
     val weatherInCity = viewModel.weatherInCity.observeAsState(createWeatherInCity()).value
-    val todayWeatherInCity = viewModel.clickedWeatherInCity.observeAsState(createClickedWeatherInCity()).value
+    val todayWeatherInCity = viewModel.weatherInCity.observeAsState(createWeatherInCity()).value.weatherByWeekList[0]
     val backgroundColor = viewModel.backgroundColor.observeAsState(Brush.sweepGradient(
         colors = listOf(Purple80, Pink80)
     )).value
@@ -91,42 +90,37 @@ fun MainScreen(
                     .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Row(
+                Box (
                     modifier = Modifier
                         .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(onClick = {
-                        openDialog.value = true
-                    }) {
-                        Icon(
-                            imageVector = Icons.Filled.Search,
-                            contentDescription = "Search city",
-                            tint = Color.White
-                        )
-                    }
                     Text(
                         text = weatherInCity.nameCity,
                         style = TextStyle(
                             fontSize = 26.sp,
                             color = Color.White,
                             fontFamily = FontFamily.SansSerif
-                        )
+                        ),
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(top = 10.dp)
                     )
                     IconButton(onClick = {
-                    }) {
+                        openDialog.value = true
+                    },
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(top = 5.dp)
+                    ) {
                         Icon(
-                            imageVector = Icons.Filled.Refresh,
-                            contentDescription = "refresh",
-                            tint = Color.White
+                            imageVector = Icons.Filled.Search,
+                            contentDescription = "Search city",
+                            tint = Color.White,
                         )
                     }
                 }
                 Text(
-                    text = todayWeatherInCity.todayDay,
-                    modifier = Modifier
-                        .padding(bottom = 10.dp),
+                    text = todayWeatherInCity.todayDay + ", " + todayWeatherInCity.dayOfWeek,
                     style = TextStyle(
                         fontSize = 14.sp,
                         color = Color.LightGray,
@@ -263,6 +257,7 @@ fun MainScreen(
 private fun WeatherByHoursList(weatherByHoursList: List<WeatherByHours>) {
     val currentHour = getCurrentTime().split(":")[0].toInt()
 
+
     LazyRow(
         modifier = Modifier
             .fillMaxWidth()
@@ -272,8 +267,7 @@ private fun WeatherByHoursList(weatherByHoursList: List<WeatherByHours>) {
     ) {
 
         itemsIndexed(weatherByHoursList) { index, currentWeatherInHour ->
-            val currentHourInRequireLocal =
-                currentWeatherInHour.hours.split(" ")[1].split(":")[0].toInt()
+            val currentHourInRequireLocal = currentWeatherInHour.hours.split(" ")[1].split(":")[0].toInt()
             if (currentHour < currentHourInRequireLocal) {
                 Row(
                     modifier = Modifier
@@ -339,85 +333,88 @@ private fun WeatherDayOfWeekList(
             .padding(top = 10.dp)
     ) {
         itemsIndexed(weatherByWeekList) { index, currentDay ->
-            Button(onClick = {
-                getClickDay(index + 1)
-                navigateToDetail()
-            },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = if (index == 0) 0.dp else 10.dp),
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MainBlockColor),
-            ) {
-                Row(
+            if (index != 0) {
+                Button(
+                    onClick = {
+                        getClickDay(index)
+                        navigateToDetail()
+                    },
                     modifier = Modifier
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .fillMaxWidth()
+                        .padding(top = if (index == 0) 0.dp else 10.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MainBlockColor),
                 ) {
-                    Column {
-                        Text(
-                            text = currentDay.dayOfWeek,
-                            style = TextStyle(
-                                fontSize = 20.sp,
-                                color = Color.White,
-                                fontFamily = FontFamily.Monospace
-                            )
-                        )
-
-                        Text(
-                            text = currentDay.todayDay,
-                            style = TextStyle(
-                                fontSize = 14.sp,
-                                color = Color.LightGray,
-                                fontFamily = FontFamily.Monospace
-                            ),
-                            modifier = Modifier
-                                .padding(top = 2.dp)
-                        )
-                    }
-
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        AsyncImage(
-                            model = currentDay.iconWeather,
-                            contentDescription = currentDay.condition,
-                            modifier = Modifier
-                                .size(40.dp)
-                                .padding(start = 5.dp)
-                        )
-                        Text(
-                            maxLines = 2,
-                            modifier = Modifier
-                                .width(50.dp),
-                            text = currentDay.condition,
-                            overflow = TextOverflow.Ellipsis,
-                            style = TextStyle(
-                                fontSize = 12.sp,
-                                color = Color.White,
-                                textAlign = TextAlign.Center,
+                        Column {
+                            Text(
+                                text = currentDay.dayOfWeek,
+                                style = TextStyle(
+                                    fontSize = 20.sp,
+                                    color = Color.White,
+                                    fontFamily = FontFamily.Monospace
+                                )
                             )
-                        )
-                    }
-                    Row {
-                        Text(
-                            text = "${currentDay.maxTemp.toFloat().toInt()}°",
-                            style = TextStyle(
-                                fontSize = 20.sp,
-                                color = Color.White,
-                                fontFamily = FontFamily.Monospace
-                            )
-                        )
 
-                        Text(
-                            text = "${currentDay.minTemp.toFloat().toInt()}°",
-                            style = TextStyle(
-                                fontSize = 20.sp,
-                                color = MinTempColor,
-                                fontFamily = FontFamily.Monospace
+                            Text(
+                                text = currentDay.todayDay,
+                                style = TextStyle(
+                                    fontSize = 14.sp,
+                                    color = Color.LightGray,
+                                    fontFamily = FontFamily.Monospace
+                                ),
+                                modifier = Modifier
+                                    .padding(top = 2.dp)
                             )
-                        )
+                        }
+
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            AsyncImage(
+                                model = currentDay.iconWeather,
+                                contentDescription = currentDay.condition,
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .padding(start = 5.dp)
+                            )
+                            Text(
+                                maxLines = 2,
+                                modifier = Modifier
+                                    .width(50.dp),
+                                text = currentDay.condition,
+                                overflow = TextOverflow.Ellipsis,
+                                style = TextStyle(
+                                    fontSize = 12.sp,
+                                    color = Color.White,
+                                    textAlign = TextAlign.Center,
+                                )
+                            )
+                        }
+                        Row {
+                            Text(
+                                text = "${currentDay.maxTemp.toFloat().toInt()}°",
+                                style = TextStyle(
+                                    fontSize = 20.sp,
+                                    color = Color.White,
+                                    fontFamily = FontFamily.Monospace
+                                )
+                            )
+
+                            Text(
+                                text = "${currentDay.minTemp.toFloat().toInt()}°",
+                                style = TextStyle(
+                                    fontSize = 20.sp,
+                                    color = MinTempColor,
+                                    fontFamily = FontFamily.Monospace
+                                )
+                            )
+                        }
                     }
                 }
             }

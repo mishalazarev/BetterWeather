@@ -2,6 +2,7 @@ package white.ball.betterweather.presentation.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,7 +14,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -93,14 +93,15 @@ private fun MainCardInfo(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
+            Box (
+                modifier = Modifier
+                    .fillMaxWidth(),
+            )  {
                 IconButton(onClick = {
                     navigateBack()
-                }) {
+                },
+                    modifier = Modifier
+                        .align(Alignment.TopStart)) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Default.KeyboardArrowLeft,
                         contentDescription = "back",
@@ -114,19 +115,15 @@ private fun MainCardInfo(
                         color = Color.White,
                         fontFamily = FontFamily.SansSerif,
                         textAlign = TextAlign.Center
-                    )
+                    ),
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 10.dp)
                 )
-                IconButton(onClick = {  }) {
-                    Icon(
-                        imageVector = Icons.Filled.Refresh,
-                        contentDescription = "refresh",
-                        tint = Color.White
-                    )
-                }
             }
             Text(
                 modifier = Modifier.padding(bottom = 10.dp),
-                text = clickedWeatherInPlace.dayOfWeek,
+                text = clickedWeatherInPlace.todayDay + ", " + clickedWeatherInPlace.dayOfWeek,
                 style = TextStyle(
                     fontSize = 14.sp,
                     color = Color.LightGray,

@@ -14,18 +14,20 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun DialogSearch(dialogState: MutableState<Boolean>, confirmCity: (String) -> Unit) {
-    val dialogText = remember {
-        mutableStateOf("")
-    }
+    val dialogText = remember { mutableStateOf("") }
+
     AlertDialog(
         onDismissRequest = {
             dialogState.value = false
         },
         confirmButton = {
-            TextButton(onClick = {
-                dialogState.value = false
-                confirmCity(dialogText.value)
-            }) {
+            TextButton(
+                onClick = {
+                    dialogState.value = false
+                    confirmCity(dialogText.value)
+                },
+                enabled = dialogText.value.isNotEmpty(),
+            ) {
                 Text(text = "Ok")
             }
         },
@@ -48,6 +50,8 @@ fun DialogSearch(dialogState: MutableState<Boolean>, confirmCity: (String) -> Un
                             fontSize = 14.sp
                         )
                     )
-                })
+                },
+                isError = dialogText.value.isEmpty()
+            )
         })
 }

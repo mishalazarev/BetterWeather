@@ -52,6 +52,7 @@ class MainScreenViewModel(app: Application) : AndroidViewModel(app) {
             weatherInCity = _weatherInCity,
             backgroundColor = _backgroundColor
         )
+        localStorage.writeNameCity(newNameCity = newNameCity)
     }
 
     fun setClickedWeatherInCity(indexDay: Int) {

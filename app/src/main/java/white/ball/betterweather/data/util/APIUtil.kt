@@ -45,36 +45,11 @@ class APIUtil {
         val sunriseTime = timeCorrectorUtil.getCorrectTime(astroJSONObject.getString("sunrise"))
         val sunsetTime = timeCorrectorUtil.getCorrectTime(astroJSONObject.getString("sunset"))
 
-        val hoursArray = daysJSONArray.getJSONObject(0).getJSONArray("hour")
-
-        val weatherByHoursList = mutableListOf<WeatherByHours>()
-
-        for (hour in 0 until 24) {
-            val hourObject = hoursArray.getJSONObject(hour)
-            val hourResultText = hourObject.getString("time")
-
-            /** weather by hour */
-
-            val linkWeatherIcon = "https:${hourObject.getJSONObject("condition").getString("icon")}"
-            val conditionText = hourObject.getJSONObject("condition").getString("text")
-            val temp = hourObject.getString("temp_c")
-
-            weatherByHoursList.add(
-                WeatherByHours(
-                    linkWeatherIcon,
-                    conditionText,
-                    temp,
-                    hourResultText
-                )
-            )
-
-        }
-
         /** weather in day of week */
 
         val weatherDayOfWeek = mutableListOf<ClickedWeatherInCity>()
 
-        for (day in 1 until daysJSONArray.length()) {
+        for (day in 0 until daysJSONArray.length()) {
             currentDayOfWeekText = if (day != 0) {
                 convertorUtil.getNextDayOfWeek(currentDayOfWeekText)
             } else {
@@ -84,6 +59,51 @@ class APIUtil {
             val dayJSONnObj = daysJSONArray.getJSONObject(day)
             val dayObject = dayJSONnObj.getJSONObject("day")
             val astroObject = daysJSONArray.getJSONObject(day).getJSONObject("astro")
+
+
+            /** weather by hour */
+
+            val hoursArray = daysJSONArray.getJSONObject(day).getJSONArray("hour")
+
+            val weatherByHoursList = mutableListOf<WeatherByHours>()
+
+            val countHours = if (day != 0) {
+                4
+            } else {
+                24
+            }
+
+            var indexHour = 0
+
+            for (hour in 0 until countHours) {
+
+                val hourObject = hoursArray.getJSONObject(indexHour)
+                val hourResultText = hourObject.getString("time")
+
+                val linkWeatherIcon = "https:${hourObject.getJSONObject("condition").getString("icon")}"
+                val conditionText = hourObject.getJSONObject("condition").getString("text")
+                val temp = hourObject.getString("temp_c")
+
+                when (countHours) {
+                    4 -> {
+                        indexHour += 6
+                    }
+                    24 -> {
+                        indexHour++
+                    }
+                    else -> throw IllegalArgumentException("don't have for information about hours in this day [$countHours]")
+                }
+
+                weatherByHoursList.add(
+                    WeatherByHours(
+                        linkWeatherIcon,
+                        conditionText,
+                        temp,
+                        hourResultText
+                    )
+                )
+            }
+
 
             weatherDayOfWeek.add(
                 ClickedWeatherInCity(

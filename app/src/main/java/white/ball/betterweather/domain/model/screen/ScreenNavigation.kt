@@ -6,4 +6,6 @@ sealed class ScreenNavigation(
     data object LoadScreen : ScreenNavigation("load_screen")
     data object MainScreen : ScreenNavigation("main_screen")
     data object DetailScreen : ScreenNavigation("detail_screen")
+
+    data object InternetNotWorking: ScreenNavigation("internet_not_working")
 }

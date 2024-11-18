@@ -1,6 +1,8 @@
 package white.ball.betterweather.domain.util
 
+import android.util.Log
 import androidx.compose.ui.graphics.Brush
+import white.ball.betterweather.presentation.TAG
 import white.ball.betterweather.presentation.ui.theme.DayEndColor
 import white.ball.betterweather.presentation.ui.theme.DayStartColor
 import white.ball.betterweather.presentation.ui.theme.NightEndColor
